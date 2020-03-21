@@ -3,7 +3,7 @@ import setuptools
 name = 'nice-ast'
 dependencies = []
 dependencies_dev = ['pytest']
-console_scripts = ['niceast = niceast:entry_point']
+console_scripts = ['nice-ast = niceast:entry_point']
 
 setuptools.setup(
     name=name,

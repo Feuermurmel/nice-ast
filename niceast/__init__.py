@@ -1,4 +1,6 @@
 import argparse
+import ast
+import pathlib
 import sys
 
 
@@ -12,13 +14,79 @@ class UserError(Exception):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='Parse a Python file and print the resulting AST in a nice, colorful way.')
+
+    parser.add_argument(
+        'path',
+        type=pathlib.Path,
+        help='Path to the Python file to parse.')
 
     return parser.parse_args()
 
 
-def main():
-    pass
+def format_type(n):
+    return f'\x1b[1m{type(n).__name__}\x1b[m'
+
+
+def format_value(n):
+    return f'\x1b[32m{repr(n)}\x1b[m'
+
+
+def format_one_line(n):
+    if isinstance(n, ast.AST):
+        res = format_type(n)
+
+        if n._fields:
+            values_str = ', '.join(
+                f'{i}: {format_one_line(getattr(n, i))}'
+                for i in n._fields)
+
+            res += f' {{ {values_str} }}'
+
+        return res
+    elif isinstance(n, list):
+        elements_str = ', '.join(format_one_line(i) for i in n)
+
+        return f'[{elements_str}]'
+    else:
+        return format_value(n)
+
+
+def print_ast(node: ast.AST):
+    def node_complexity(n):
+        if isinstance(n, ast.AST):
+            return 1 + sum(1 + node_complexity(getattr(n, i)) for i in n._fields)
+        elif isinstance(n, list):
+            return sum(node_complexity(i) for i in n)
+        elif isinstance(n, str):
+            return len(n) // 10 + 1
+        else:
+            return 1
+
+    def walk_node(n, indent, prefix):
+        if node_complexity(n) < 8:
+            print(f'{indent}{prefix}{format_one_line(n)}')
+        else:
+            if isinstance(n, ast.AST):
+                print(f'{indent}{prefix}{format_type(n)}')
+
+                for i in n._fields:
+                    walk_node(getattr(n, i), indent + '  ', f'{i}: ')
+            elif isinstance(n, list):
+                print(f'{indent}{prefix}')
+
+                for i in n:
+                    walk_node(i, indent + '  ', '- ')
+            else:
+                print(f'{indent}{prefix}{format_value(n)}')
+
+    walk_node(node, '', '')
+
+
+def main(path):
+    # TODO: Add error handling for parsing errors.
+    print_ast(ast.parse(path.read_bytes(), str(path)))
 
 
 def entry_point():
