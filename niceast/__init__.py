@@ -15,7 +15,18 @@ class UserError(Exception):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Parse a Python file and print the resulting AST in a nice, colorful way.')
+        description='Parse a Python file and print the resulting AST in a '
+                    'nice, colorful way.')
+
+    parser.add_argument(
+        '-l',
+        '--line-complexity',
+        type=int,
+        default=7,
+        help='Maximum complexity of a node formatted on a single line. Each '
+             'node name, field name, and field value or list item is counted '
+             'as one. Defaults to 7.',
+    )
 
     parser.add_argument(
         'path',
@@ -53,7 +64,7 @@ def format_one_line(n):
         return format_value(n)
 
 
-def print_ast(node: ast.AST):
+def print_ast(node: ast.AST, max_line_complexity):
     def node_complexity(n):
         if isinstance(n, ast.AST):
             return 1 + sum(1 + node_complexity(getattr(n, i)) for i in n._fields)
@@ -65,7 +76,7 @@ def print_ast(node: ast.AST):
             return 1
 
     def walk_node(n, indent, prefix):
-        if node_complexity(n) < 8:
+        if node_complexity(n) <= max_line_complexity:
             print(f'{indent}{prefix}{format_one_line(n)}')
         else:
             if isinstance(n, ast.AST):
@@ -84,9 +95,9 @@ def print_ast(node: ast.AST):
     walk_node(node, '', '')
 
 
-def main(path):
+def main(path, line_complexity):
     # TODO: Add error handling for parsing errors.
-    print_ast(ast.parse(path.read_bytes(), str(path)))
+    print_ast(ast.parse(path.read_bytes(), str(path)), line_complexity)
 
 
 def entry_point():

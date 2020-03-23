@@ -7,15 +7,19 @@
 
 ```
 $ nice-ast --help
-usage: nice-ast [-h] path
+usage: nice-ast [-h] [-l LINE_COMPLEXITY] path
 
 Parse a Python file and print the resulting AST in a nice, colorful way.
 
 positional arguments:
-  path        Path to the Python file to parse.
+  path                  Path to the Python file to parse.
 
 optional arguments:
-  -h, --help  show this help message and exit
+  -h, --help            show this help message and exit
+  -l LINE_COMPLEXITY, --line-complexity LINE_COMPLEXITY
+                        Maximum complexity of a node formatted on a single
+                        line. Each node name, field name, and field value or
+                        list item is counted as one. Defaults to 7.
 ```
 
 
